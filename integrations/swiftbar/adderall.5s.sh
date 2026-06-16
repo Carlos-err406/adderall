@@ -6,11 +6,14 @@
 # Filename "adderall.5s.sh" => SwiftBar re-runs it every 5s.
 # Shows 💊 only while active; nothing when off (SwiftBar hides the item).
 #
-# Strip SwiftBar's default footer noise (keep only the SwiftBar submenu):
+# Strip all of SwiftBar's default footer items for a minimal dropdown.
+# (Delete the hideSwiftBar line to restore the "SwiftBar" submenu — it's the
+#  only in-menu way to reach SwiftBar's own preferences.)
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
+# <swiftbar.hideSwiftBar>true</swiftbar.hideSwiftBar>
 
 # Resolve the adderall binary by absolute path (GUI apps have a minimal PATH).
 # install.sh replaces __ADDERALL_BIN__ with the real install path.
