@@ -65,29 +65,48 @@ _schedule_off() {
 }
 
 _on() {
-  local dur="$1" secs pid
-  if _active; then
-    echo "$PILL adderall already ON (caffeinate PID $(cat "$PIDFILE"))"
-    return 0
-  fi
+  local dur="$1" secs="" oldpid="" pid wasActive=false hadTimer=false
   if [ -n "$dur" ]; then
     if ! secs="$(_parse_duration "$dur")"; then
       echo "adderall: invalid duration '$dur' — use 30m, 2h, 90s, or a number of minutes" >&2
       return 2
     fi
-    nohup caffeinate -disu -t "$secs" >/dev/null 2>&1 &
-    pid=$!
-    echo "$pid" > "$PIDFILE"
-    echo $(( $(date +%s) + secs )) > "$UNTILFILE"
-    sudo pmset disablesleep 1
-    _schedule_off "$pid"
+  fi
+  if _active; then
+    wasActive=true
+    oldpid="$(cat "$PIDFILE" 2>/dev/null)"
+    [ -f "$UNTILFILE" ] && hadTimer=true
+  fi
+
+  # Already on with nothing to change (no timer requested, none running): no-op.
+  if $wasActive && [ -z "$secs" ] && ! $hadTimer; then
+    echo "$PILL adderall already ON (PID $oldpid)"
+    return 0
+  fi
+
+  # (Re)start caffeinate. Write the new pid BEFORE killing the old one so the old
+  # timer's watcher sees a changed pidfile and exits without restoring sleep —
+  # letting us re-arm/clear the timer in place without toggling pmset.
+  if [ -n "$secs" ]; then nohup caffeinate -disu -t "$secs" >/dev/null 2>&1 &
+  else                    nohup caffeinate -disu            >/dev/null 2>&1 &
+  fi
+  pid=$!
+  echo "$pid" > "$PIDFILE"
+  if [ -n "$oldpid" ]; then kill "$oldpid" 2>/dev/null || true; fi
+
+  if [ -n "$secs" ]; then echo $(( $(date +%s) + secs )) > "$UNTILFILE"; else rm -f "$UNTILFILE"; fi
+  sudo pmset disablesleep 1
+  [ -n "$secs" ] && _schedule_off "$pid"
+
+  if $wasActive; then
+    if [ -n "$secs" ]; then
+      echo "$PILL adderall timer set to $(_human "$secs") — still ON (PID $pid)"
+    else
+      echo "$PILL adderall timer cleared — staying ON indefinitely (PID $pid)"
+    fi
+  elif [ -n "$secs" ]; then
     echo "$PILL adderall ON for $(_human "$secs") — sleep blocked, even with the lid closed (PID $pid)"
   else
-    nohup caffeinate -disu >/dev/null 2>&1 &
-    pid=$!
-    echo "$pid" > "$PIDFILE"
-    rm -f "$UNTILFILE"
-    sudo pmset disablesleep 1
     echo "$PILL adderall ON — sleep blocked, even with the lid closed (PID $pid)"
   fi
 }
@@ -122,7 +141,7 @@ adderall — keep your Mac awake, even with the lid closed.
 
 usage:
   adderall                 show status (default)
-  adderall on [duration]   keep awake; optional auto-off, e.g. 30m, 2h, 90s
+  adderall on [duration]   keep awake; set/CHANGE the auto-off timer (30m, 2h, 90s) even while on
   adderall off             restore normal sleep
   adderall toggle [dur]    flip on/off (duration applies when turning on)
   adderall active          exit 0 if on, 1 if off — no output (for prompts/scripts)
