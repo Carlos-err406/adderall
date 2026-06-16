@@ -37,6 +37,7 @@ $ adderall off
 - macOS
 - `sudo` access (one-time, to install a tightly-scoped permission rule)
 - Optional: [SwiftBar](https://github.com/swiftbar/SwiftBar) for the menu-bar pill
+- Optional: [Raycast](https://raycast.com) (+ Node) for the extension
 
 ## Install
 
@@ -60,10 +61,11 @@ Uninstall with `./uninstall.sh`.
 | Command | Does |
 | --- | --- |
 | `adderall` | show status (default) |
-| `adderall on [duration]` | keep the Mac awake; optional auto-off — e.g. `30m`, `2h`, `90s` |
+| `adderall on [duration]` | keep awake; set or change the auto-off timer (`30m`, `2h`, `90s`) — even while already on. Bare `adderall on` clears the timer. |
 | `adderall off` | restore normal sleep |
 | `adderall toggle [dur]` | flip on/off (duration applies when turning on) |
 | `adderall active` | exit `0` if on, `1` if off — no output (for prompts/scripts) |
+| `adderall remaining` | time left on a timed run, e.g. `1h47m` (no output if none) |
 | `adderall help` | usage |
 
 ## Why sudo?
@@ -145,6 +147,13 @@ apps) runs with a minimal `PATH`.
 that process, clears the pidfile, and sets `pmset disablesleep 0`. The
 `active` check is just "does the pidfile point at a live process?" — which is
 why a crashed `caffeinate` never leaves a false "on".
+
+With a duration, `adderall on 2h` uses `caffeinate -t` plus a background watcher
+that restores sleep when the timer fires. Running `adderall on <dur>` again while
+already on re-arms the timer in place — the new `caffeinate` PID is written before
+the old one is killed, so the old watcher sees the changed pidfile and exits without
+toggling sleep. (`pmset` is invoked by absolute path so the passwordless rule matches
+even from a minimal `PATH`, e.g. the Raycast extension.)
 
 ## License
 
