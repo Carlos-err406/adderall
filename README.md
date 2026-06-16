@@ -113,12 +113,11 @@ adderall active 2>/dev/null && printf '💊 '
 
 ### Raycast
 
-Three [Script Commands](https://github.com/raycast/script-commands) live in
-[`integrations/raycast/`](integrations/raycast) — **Adderall Toggle / On / Off**.
-Point Raycast at the folder (**Settings → Extensions → Script Commands → Add
-Script Directory**), then search "Adderall" and run — a HUD confirms the new
-state. They call the `adderall` binary by absolute path, since Raycast (like all
-GUI apps) runs with a minimal `PATH`.
+An **Adderall Toggle** [Script Command](https://github.com/raycast/script-commands)
+lives in [`integrations/raycast/`](integrations/raycast). Point Raycast at the
+folder (**Settings → Extensions → Script Commands → Add Script Directory**), then
+search "Adderall" and run — a HUD confirms the new state. It calls the `adderall`
+binary by absolute path, since Raycast (like all GUI apps) runs with a minimal `PATH`.
 
 ## How it works
 
