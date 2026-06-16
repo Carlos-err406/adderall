@@ -41,20 +41,30 @@ $ adderall off
 
 ## Install
 
+### Homebrew
+
+```sh
+brew install carlos-err406/tap/adderall
+adderall setup   # one-time: installs the passwordless sudoers rule
+```
+
+### From source
+
 ```sh
 git clone https://github.com/Carlos-err406/adderall.git
 cd adderall
 ./install.sh
 ```
 
-The installer:
+The `install.sh` installer:
 
 1. links `adderall` into `~/.local/bin` (override with `ADDERALL_BIN_DIR=…`),
 2. installs a **scoped, passwordless** `sudoers` rule so toggling never prompts
    for a password (see [Why sudo?](#why-sudo)),
 3. installs the SwiftBar plugin if SwiftBar is present.
 
-Uninstall with `./uninstall.sh`.
+Uninstall with `./uninstall.sh`. (Homebrew: `brew uninstall adderall` +
+`sudo rm /etc/sudoers.d/adderall`.)
 
 ## Usage
 

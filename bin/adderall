@@ -122,6 +122,32 @@ _off() {
   echo "$ZZZ adderall OFF — normal sleep restored"
 }
 
+# One-time setup: install the scoped, passwordless sudoers rule so toggling never
+# prompts for a password. Used by Homebrew installs (brew can't run sudo at install).
+_setup() {
+  local user tmp
+  user="$(whoami)"
+  tmp="$(mktemp)"
+  {
+    echo "# adderall — passwordless clamshell-sleep toggle"
+    echo "# https://github.com/Carlos-err406/adderall"
+    echo "$user ALL=(root) NOPASSWD: /usr/bin/pmset disablesleep 0, /usr/bin/pmset disablesleep 1"
+  } > "$tmp"
+  if visudo -cf "$tmp" >/dev/null 2>&1; then
+    echo "Installing the passwordless sudoers rule (needs your password once)…"
+    if sudo install -m 0440 -o root -g wheel "$tmp" /etc/sudoers.d/adderall; then
+      echo "✓ adderall can now toggle sleep without a password."
+    else
+      echo "⚠️  couldn't install the sudoers rule." >&2
+    fi
+  else
+    echo "⚠️  generated sudoers rule failed validation; not installed." >&2
+  fi
+  rm -f "$tmp"
+  echo "Menu bar / prompt / status line / Raycast integrations:"
+  echo "  https://github.com/Carlos-err406/adderall#integrations"
+}
+
 _status() {
   local extra="" rem
   if _active; then
@@ -146,6 +172,7 @@ usage:
   adderall toggle [dur]    flip on/off (duration applies when turning on)
   adderall active          exit 0 if on, 1 if off — no output (for prompts/scripts)
   adderall remaining       time left on a timed run, e.g. "1h47m" (for menu bars)
+  adderall setup           one-time: install the passwordless sudoers rule
   adderall help            show this help
 
 duration: a bare number is minutes; or suffix with s / m / h.
@@ -160,6 +187,7 @@ case "${1:-status}" in
   status|"")      _status ;;
   active)         _active; exit $? ;;
   remaining)      _remaining ;;
+  setup)          _setup ;;
   help|-h|--help) _usage ;;
   *)              echo "adderall: unknown command '$1'" >&2; echo >&2; _usage >&2; exit 2 ;;
 esac
