@@ -88,7 +88,8 @@ Every integration is driven by the same pidfile, so they all stay in sync. Use
 ### Menu bar (SwiftBar)
 
 Installed automatically when SwiftBar is present. A `💊` appears in the menu bar
-while active; click it → **Turn off 💊**. The icon hides itself when off.
+while active — with a live countdown (`💊 1h47m`) on a timed run; click it →
+**Turn off 💊**. The icon hides itself when off.
 
 ### Shell prompt (Starship)
 

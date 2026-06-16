@@ -27,9 +27,11 @@ if [ "$1" = "off" ]; then
   exit 0
 fi
 
-# Render: 💊 + a "Turn off" item, only when active.
+# Render: 💊 (+ countdown on a timed run) and a "Turn off" item, only when active.
 if "$ADDERALL" active 2>/dev/null; then
-  echo "💊"
+  rem="$("$ADDERALL" remaining 2>/dev/null)"
+  if [ -n "$rem" ]; then echo "💊 $rem"; else echo "💊"; fi
   echo "---"
+  [ -n "$rem" ] && { echo "auto-off in $rem | color=#808080"; echo "---"; }
   echo "Turn off 💊 | bash=\"$0\" param1=off terminal=false refresh=true"
 fi

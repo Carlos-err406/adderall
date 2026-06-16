@@ -42,6 +42,15 @@ _human() {
   fi
 }
 
+# Echo human-readable time left on a timed run (e.g. "1h47m"), else nothing.
+_remaining() {
+  [ -f "$UNTILFILE" ] || return 0
+  local now deadline rem
+  now="$(date +%s)"; deadline="$(cat "$UNTILFILE" 2>/dev/null || echo 0)"
+  rem=$(( deadline - now ))
+  [ "$rem" -gt 0 ] && _human "$rem"
+}
+
 # When the timed caffeinate exits, restore sleep — but only if this session is
 # still the active one (the user hasn't toggled it since).
 _schedule_off() {
@@ -95,13 +104,10 @@ _off() {
 }
 
 _status() {
-  local extra="" now deadline rem
+  local extra="" rem
   if _active; then
-    if [ -f "$UNTILFILE" ]; then
-      now="$(date +%s)"; deadline="$(cat "$UNTILFILE" 2>/dev/null || echo 0)"
-      rem=$(( deadline - now ))
-      [ "$rem" -gt 0 ] && extra=" — auto-off in $(_human "$rem")"
-    fi
+    rem="$(_remaining)"
+    [ -n "$rem" ] && extra=" — auto-off in $rem"
     echo "$PILL adderall is ON${extra} — your Mac won't sleep, even with the lid closed (PID $(cat "$PIDFILE"))"
     echo "   run 'adderall off' to restore normal sleep"
   else
@@ -120,6 +126,7 @@ usage:
   adderall off             restore normal sleep
   adderall toggle [dur]    flip on/off (duration applies when turning on)
   adderall active          exit 0 if on, 1 if off — no output (for prompts/scripts)
+  adderall remaining       time left on a timed run, e.g. "1h47m" (for menu bars)
   adderall help            show this help
 
 duration: a bare number is minutes; or suffix with s / m / h.
@@ -133,6 +140,7 @@ case "${1:-status}" in
   toggle)         if _active; then _off; else _on "$2"; fi ;;
   status|"")      _status ;;
   active)         _active; exit $? ;;
+  remaining)      _remaining ;;
   help|-h|--help) _usage ;;
   *)              echo "adderall: unknown command '$1'" >&2; echo >&2; _usage >&2; exit 2 ;;
 esac
