@@ -13,14 +13,14 @@
   "commands": [
     {
       "name": "on",
-      "title": "Adderall on",
+      "title": "Adderall On",
       "subtitle": "Adderall",
       "description": "Keep the Mac awake (no timer).",
       "mode": "no-view"
     },
     {
       "name": "off",
-      "title": "Adderall off",
+      "title": "Adderall Off",
       "subtitle": "Adderall",
       "description": "Restore normal sleep.",
       "mode": "no-view"
