@@ -1,38 +1,29 @@
 #!/bin/bash
 #
-# SwiftBar plugin — 💊 menu-bar indicator + toggle for adderall.
-# Install: copy into your SwiftBar plugin folder (the installer does this for you,
-# baking in the absolute path to the `adderall` binary).
-# Filename "adderall.5s.sh" => SwiftBar re-runs it every 5s.
-# Shows 💊 only while active; nothing when off (SwiftBar hides the item).
+# SwiftBar plugin — adderall menu-bar indicator + toggle.
+# Menu bar shows a monochrome template icon (auto-matches light/dark): a pill when
+# keeping awake indefinitely, or a pill+timer on a timed run. Icons are template
+# PNGs derived from integrations/swiftbar/icons/*.png via make-icon.swift.
+# The exact remaining time is in the dropdown. Filename .5s.sh => refresh every 5s.
 #
-# Strip all of SwiftBar's default footer items for a minimal dropdown.
-# (Delete the hideSwiftBar line to restore the "SwiftBar" submenu — it's the
-#  only in-menu way to reach SwiftBar's own preferences.)
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideDisablePlugin>true</swiftbar.hideDisablePlugin>
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideSwiftBar>true</swiftbar.hideSwiftBar>
 
-# Resolve the adderall binary by absolute path (GUI apps have a minimal PATH).
-# install.sh replaces __ADDERALL_BIN__ with the real install path.
 ADDERALL="__ADDERALL_BIN__"
 [ -x "$ADDERALL" ] || ADDERALL="$(command -v adderall 2>/dev/null)"
 [ -x "$ADDERALL" ] || ADDERALL="$HOME/.local/bin/adderall"
 
-# Menu action: turn off, then refresh the icon away.
-if [ "$1" = "off" ]; then
-  "$ADDERALL" off >/dev/null 2>&1
-  exit 0
-fi
+PILL_IMG="iVBORw0KGgoAAAANSUhEUgAAACwAAAAsCAYAAAAehFoBAAAAAXNSR0IArs4c6QAAAGxlWElmTU0AKgAAAAgABAEaAAUAAAABAAAAPgEbAAUAAAABAAAARgEoAAMAAAABAAIAAIdpAAQAAAABAAAATgAAAAAAAACwAAAAAQAAALAAAAABAAKgAgAEAAAAAQAAACygAwAEAAAAAQAAACwAAAAAhvN0HgAAAAlwSFlzAAAbEQAAGxEBBJxgLwAABjpJREFUWAm1mcuLXEUUxtMzGnxLQEFxo+Aj0UgwgvhCdCMK7sUYYwRjUCcGEfG/MEZ0oSCjCxfG+MCNW8FNJLoQ48SAGoizCC6MODFxxsTr96uur3K65t5O9zwOfF2nzvO7p6tv357pNU0zueacNFJ7QttKFL4ojou2qONHUs1er/cfG/W8VMutwgbhLuEK4YAwI3yvuBNaiYNb7NH0ZJzAmaUmizmSNIFod8Hoy+XOLZBVr6tk2SE8IUD2AqGWozLsF95SzrHMzxwarmIiY7JabWfFV/u9d5xjansaiPIfE44IUbiIiOib1WYrV6PVHCbS2GVwk86mIcbJjq33roU9TUbr88K8gESCbfrZHOPY1yJps6e4G7ettpmMycbVNRzryb6g2mfoLmkj2GWDOIJ/SyY92XaG8SHxTPoMRXtt8z7l5TP7ohLeFCAf61FnVKHucYEP5yyF3EhqKVoX956V+Lackp/JTsmwVxiXrHtRD2F/jTCluuku4VsHzmECSRMmri6ccjPZXdrsEUatnXKHvND7qLA5Hok4NefWpGrSxPkimkz2JdleF2qyjiNnXHHfB+ORqMl5Hy/ENlaD5pFs12RjnXEJ04v8DfF8uaBJuaj3+A370hrOLGRjzYG4IRv3GBKSXNd7whAhCVhnrcUxxR7O7BsyjkM2kmzrVXoEZZ4GSEyOpPFRzAUH1jBZyNZnltxh4lrDYmrfEROuHfEC8HkfL4Yvjd3yLeXWVfc7356LWxBm4l2iLYlAk41+bNcJBwXukW0xMq+YwONb4T6fYSpjNNgjkQi+NRwDgbvCrLaPC79jFlZb3lfPBSYcz17d2ISxJ6KK52HkauFViEvulc7j4LWC46WumND7B+F+Yc4PP36IKQ8uImIdXzrrWl8WeBhB9gjpArXeI/wmIF0PM0uxU++08BCXr3UyPl6adCIoZ3n6ysG7ZfMTlNQke/XKO0SdO4VjyboypCn1r/Bsrp/4xAl7onH1ZHcp0WTjpCj6tpB+OWi9Q/hVQGLcuDr5kH0uktW+PMCbpKeb1hw8pcBhz7NyN+8IJr1J+i8YJeMSJR5ZNFnZyoTjUTBhT3aUh+/UQS/vCmvzRd4m/efsaCPNu9VmJ2VBiJM1p/4Q5YzT7RvVVfadwrDJ1g0V3kwLJr1Run/D1bFte4UnsvHMmqw5DhyJ/siXRhYClg+kXJQnvV76KKTJnReeyXmJi/aFqHTIp7tEMeZgfjByhpC2SZzPRt6HgknfLH0Go6QtFztkt1dkE0HZCz/p5bbmM7tDxuWQNSGVafYJF2cSXaSJq8ma6KLjoNg+4Vz0YRn+oYLEjVm7PiAxptZTEb18JFye698k/cfsIB6h37aOyUbC5Yjw4eL7dZ1wWEDq5svZU+9z4bJM6hbphzBKIPtUINs1WdsTaeIh/QoVJMsh15VL3S+EK3OvG6V/I2zP+3hGyyTlr/U0cabLh+OAsElYjYcXePHM8aWwVQ9Mf6jnJVpPQQqnJD2TaK37Rzt6Stgohb8krqZA5FFhWiTXBrIm5N7saxu5xcYVrhcuFOqrk2nFhIanBR5D+TKir0l4rftjHyBLDt//twurKTQ+JWzXZD+uyJpQTRY+0VZ0CKc/MhOxCmKyT4vs/kyWNoVApde+esrprfmJqFWQLrK0wme4NXvEa3/Xfy0XyFk6LJwR2gL74eO/UutvYVuYrOuzmgCr7VKLYItxOFIOhA8JkB5H3LAth0YnBch+Up1ZkzMZ76kTa1rH75ikT6goH4hpMsYQF6lTsEOWM/tpdWYhYcS8SC76bR9Y+eKgCd9CXwvckx0gdSyhzpwA2c9U17/GsbfVxI7UvmiPucnOkWDKf2rlb7qcOydIHVnI+UvgmyySpQCERqlJTFccduqku4SG0UD6Kxl2CtzguxLlWiTEnhC2qAbPDAwhTs21vMYCjsNnHT+6bV6xy6MGRt4/or1/REpNUj/Y2M56ULi7riVbeljR6ocb7+Paphc+bbmcYSZSrkJTghx/L+MfKk8KNwi18GXD3WVaeE85c7kOcaVW0G1jjRKnit3+aB/IhbA/HCVBBM6ykW+dls3CAwL/vTwu7BO+E/gXK3eY9C6xSmLDqNtnIvalJL1gr21tvuZ/8Lmpuy+8iB0AAAAASUVORK5CYII="
+PILL_TIMER_IMG="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"
 
-# Render only when active. Menu bar uses monochrome SF Symbols (outline; they
-# auto-match the system light/dark menu bar): an outline pill, plus a timer
-# glyph on a timed run. The exact time lives in the dropdown to keep the bar clean.
+if [ "$1" = "off" ]; then "$ADDERALL" off >/dev/null 2>&1; exit 0; fi
+
 if "$ADDERALL" active 2>/dev/null; then
   rem="$("$ADDERALL" remaining 2>/dev/null)"
-  if [ -n "$rem" ]; then echo ":pills: :timer:"; else echo ":pills:"; fi
+  if [ -n "$rem" ]; then echo "| templateImage=$PILL_TIMER_IMG"; else echo "| templateImage=$PILL_IMG"; fi
   echo "---"
   [ -n "$rem" ] && { echo "Auto-off in $rem | sfimage=timer"; echo "---"; }
   echo "Turn off | sfimage=moon.zzz.fill bash=\"$0\" param1=off terminal=false refresh=true"

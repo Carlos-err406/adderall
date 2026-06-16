@@ -87,10 +87,11 @@ Every integration is driven by the same pidfile, so they all stay in sync. Use
 
 ### Menu bar (SwiftBar)
 
-Installed automatically when SwiftBar is present. A monochrome **outline pill**
-SF Symbol appears in the menu bar while active (auto-matching the system light/dark
-menu bar) — plus a **timer** glyph on a timed run, with the exact remaining time in
-the dropdown. Click it → **Turn off**. The icon hides itself when off.
+Installed automatically when SwiftBar is present. A monochrome **template icon**
+appears in the menu bar while active (auto-matching the system light/dark menu bar):
+a **pill** for an indefinite run, or a **pill + timer** on a timed run, with the
+exact remaining time in the dropdown. Click it → **Turn off**. The icon hides itself
+when off. (Icons are built from `integrations/swiftbar/icons/` via `make-icon.swift`.)
 
 ### Shell prompt (Starship)
 
