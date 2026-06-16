@@ -27,11 +27,13 @@ if [ "$1" = "off" ]; then
   exit 0
 fi
 
-# Render: 💊 (+ countdown on a timed run) and a "Turn off" item, only when active.
+# Render only when active. Menu bar uses monochrome SF Symbols (outline; they
+# auto-match the system light/dark menu bar): an outline pill, plus a timer
+# glyph on a timed run. The exact time lives in the dropdown to keep the bar clean.
 if "$ADDERALL" active 2>/dev/null; then
   rem="$("$ADDERALL" remaining 2>/dev/null)"
-  if [ -n "$rem" ]; then echo "💊 $rem"; else echo "💊"; fi
+  if [ -n "$rem" ]; then echo ":pills: :timer:"; else echo ":pills:"; fi
   echo "---"
-  [ -n "$rem" ] && { echo "auto-off in $rem | color=#808080"; echo "---"; }
-  echo "Turn off 💊 | bash=\"$0\" param1=off terminal=false refresh=true"
+  [ -n "$rem" ] && { echo "Auto-off in $rem | sfimage=timer"; echo "---"; }
+  echo "Turn off | sfimage=moon.zzz.fill bash=\"$0\" param1=off terminal=false refresh=true"
 fi
