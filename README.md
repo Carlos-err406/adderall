@@ -27,7 +27,8 @@ $ adderall off
 ```
 
 > ⚠️ While `adderall` is on, your Mac will **not** sleep with the lid shut. Keep
-> it on a hard, ventilated surface and turn it **off** when you're done.
+> it on a hard, ventilated surface and turn it **off** when you're done — or use a
+> timed run like `adderall on 2h` so it auto-restores sleep and you can't forget it.
 
 ## Requirements
 
@@ -57,9 +58,9 @@ Uninstall with `./uninstall.sh`.
 | Command | Does |
 | --- | --- |
 | `adderall` | show status (default) |
-| `adderall on` | keep the Mac awake — display + system sleep, lid-closed too |
+| `adderall on [duration]` | keep the Mac awake; optional auto-off — e.g. `30m`, `2h`, `90s` |
 | `adderall off` | restore normal sleep |
-| `adderall toggle` | flip on/off |
+| `adderall toggle [dur]` | flip on/off (duration applies when turning on) |
 | `adderall active` | exit `0` if on, `1` if off — no output (for prompts/scripts) |
 | `adderall help` | usage |
 

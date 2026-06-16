@@ -8,6 +8,7 @@
 # State is tracked by a pidfile so every integration agrees on on/off.
 
 PIDFILE="${TMPDIR:-/tmp}/adderall.pid"
+UNTILFILE="${TMPDIR:-/tmp}/adderall.until"
 PILL="💊"
 ZZZ="😴"
 
@@ -16,16 +17,70 @@ _active() {
   [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null
 }
 
+# Parse "30m" / "2h" / "90s" / bare-minutes -> seconds (echoed). Non-zero on bad input.
+_parse_duration() {
+  local d="$1" n unit
+  [ -z "$d" ] && return 1
+  case "$d" in
+    *h) unit=3600; n="${d%h}" ;;
+    *m) unit=60;   n="${d%m}" ;;
+    *s) unit=1;    n="${d%s}" ;;
+    *)  unit=60;   n="$d" ;;          # bare number = minutes
+  esac
+  case "$n" in ''|*[!0-9]*) return 2 ;; esac
+  echo $(( n * unit ))
+}
+
+# Seconds -> "1h30m" / "45m" / "20s".
+_human() {
+  local s="$1" h m
+  h=$(( s / 3600 )); m=$(( (s % 3600) / 60 ))
+  if   [ "$h" -gt 0 ] && [ "$m" -gt 0 ]; then echo "${h}h${m}m"
+  elif [ "$h" -gt 0 ]; then echo "${h}h"
+  elif [ "$m" -gt 0 ]; then echo "${m}m"
+  else echo "${s}s"
+  fi
+}
+
+# When the timed caffeinate exits, restore sleep — but only if this session is
+# still the active one (the user hasn't toggled it since).
+_schedule_off() {
+  # shellcheck disable=SC2016  # $1/$2/$3 are args for the inner bash, not parent vars
+  nohup bash -c '
+    pid="$1"; pf="$2"; uf="$3"
+    while kill -0 "$pid" 2>/dev/null; do sleep 2; done
+    [ "$(cat "$pf" 2>/dev/null)" = "$pid" ] || exit 0
+    rm -f "$pf" "$uf"
+    sudo /usr/bin/pmset disablesleep 0 >/dev/null 2>&1
+  ' _ "$1" "$PIDFILE" "$UNTILFILE" >/dev/null 2>&1 &
+}
+
 _on() {
+  local dur="$1" secs pid
   if _active; then
     echo "$PILL adderall already ON (caffeinate PID $(cat "$PIDFILE"))"
     return 0
   fi
-  # -d display  -i idle system  -s system (on AC)  -u declare user active
-  nohup caffeinate -disu >/dev/null 2>&1 &
-  echo $! > "$PIDFILE"
-  sudo pmset disablesleep 1
-  echo "$PILL adderall ON — sleep blocked, even with the lid closed (PID $(cat "$PIDFILE"))"
+  if [ -n "$dur" ]; then
+    if ! secs="$(_parse_duration "$dur")"; then
+      echo "adderall: invalid duration '$dur' — use 30m, 2h, 90s, or a number of minutes" >&2
+      return 2
+    fi
+    nohup caffeinate -disu -t "$secs" >/dev/null 2>&1 &
+    pid=$!
+    echo "$pid" > "$PIDFILE"
+    echo $(( $(date +%s) + secs )) > "$UNTILFILE"
+    sudo pmset disablesleep 1
+    _schedule_off "$pid"
+    echo "$PILL adderall ON for $(_human "$secs") — sleep blocked, even with the lid closed (PID $pid)"
+  else
+    nohup caffeinate -disu >/dev/null 2>&1 &
+    pid=$!
+    echo "$pid" > "$PIDFILE"
+    rm -f "$UNTILFILE"
+    sudo pmset disablesleep 1
+    echo "$PILL adderall ON — sleep blocked, even with the lid closed (PID $pid)"
+  fi
 }
 
 _off() {
@@ -33,18 +88,25 @@ _off() {
     kill "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null || true
     rm -f "$PIDFILE"
   fi
+  rm -f "$UNTILFILE"
   pkill -x caffeinate 2>/dev/null || true   # fallback for a stale pidfile
   sudo pmset disablesleep 0
   echo "$ZZZ adderall OFF — normal sleep restored"
 }
 
 _status() {
+  local extra="" now deadline rem
   if _active; then
-    echo "$PILL adderall is ON — your Mac won't sleep, even with the lid closed (PID $(cat "$PIDFILE"))"
+    if [ -f "$UNTILFILE" ]; then
+      now="$(date +%s)"; deadline="$(cat "$UNTILFILE" 2>/dev/null || echo 0)"
+      rem=$(( deadline - now ))
+      [ "$rem" -gt 0 ] && extra=" — auto-off in $(_human "$rem")"
+    fi
+    echo "$PILL adderall is ON${extra} — your Mac won't sleep, even with the lid closed (PID $(cat "$PIDFILE"))"
     echo "   run 'adderall off' to restore normal sleep"
   else
     echo "$ZZZ adderall is OFF — normal sleep behavior"
-    echo "   run 'adderall on' to keep it awake (even with the lid closed)"
+    echo "   run 'adderall on' (or 'adderall on 2h') to keep it awake, even with the lid closed"
   fi
 }
 
@@ -53,23 +115,24 @@ _usage() {
 adderall — keep your Mac awake, even with the lid closed.
 
 usage:
-  adderall            show status (default)
-  adderall on         keep the Mac awake (display + system sleep, lid-closed too)
-  adderall off        restore normal sleep
-  adderall toggle     flip on/off
-  adderall active     exit 0 if on, 1 if off — no output (for prompts/scripts)
-  adderall help       show this help
+  adderall                 show status (default)
+  adderall on [duration]   keep awake; optional auto-off, e.g. 30m, 2h, 90s
+  adderall off             restore normal sleep
+  adderall toggle [dur]    flip on/off (duration applies when turning on)
+  adderall active          exit 0 if on, 1 if off — no output (for prompts/scripts)
+  adderall help            show this help
 
-state file: \${TMPDIR:-/tmp}/adderall.pid
+duration: a bare number is minutes; or suffix with s / m / h.
+state files: \${TMPDIR:-/tmp}/adderall.pid and adderall.until
 USAGE
 }
 
 case "${1:-status}" in
-  on)             _on ;;
+  on)             _on "$2" ;;
   off)            _off ;;
-  toggle)         if _active; then _off; else _on; fi ;;
+  toggle)         if _active; then _off; else _on "$2"; fi ;;
   status|"")      _status ;;
-  active)         _active; exit $? ;;       # silent predicate
+  active)         _active; exit $? ;;
   help|-h|--help) _usage ;;
   *)              echo "adderall: unknown command '$1'" >&2; echo >&2; _usage >&2; exit 2 ;;
 esac
