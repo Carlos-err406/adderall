@@ -119,17 +119,24 @@ adderall active 2>/dev/null && printf '💊 '
 
 ### Raycast
 
-Two [Script Commands](https://github.com/raycast/script-commands) live in
-[`integrations/raycast/`](integrations/raycast):
+A small [Raycast extension](https://developers.raycast.com) lives in
+[`integrations/raycast/`](integrations/raycast) with three commands:
 
-- **Adderall Toggle** — flip on/off.
-- **Adderall On** — keep awake; takes an optional **duration** argument (`2h`,
-  `30m`, `90s`) to set or change the auto-off timer (blank = no timer).
+- **Adderall On** — keep awake (no timer).
+- **Adderall Off** — restore normal sleep.
+- **Adderall On with Timer** — opens a list of durations (`15m`/`30m`/`1h`/`2h`/`4h`/`8h`,
+  or type a custom one); picking one sets/changes the auto-off timer.
 
-Point Raycast at the folder (**Settings → Extensions → Script Commands → Add Script
-Directory**), then search "Adderall" — a HUD confirms the new state. They call the
-`adderall` binary by absolute path, since Raycast (like all GUI apps) runs with a
-minimal `PATH`.
+Install it locally:
+
+```sh
+cd integrations/raycast
+npm install
+npm run dev      # registers it in Raycast; the commands stay after you stop it
+```
+
+The commands call the `adderall` binary by absolute path, since Raycast (like all GUI
+apps) runs with a minimal `PATH`.
 
 ## How it works
 
