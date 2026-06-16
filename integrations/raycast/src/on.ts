@@ -1,10 +1,10 @@
 import { showHUD } from "@raycast/api";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { homedir } from "node:os";
+import { adderallBin } from "./adderall";
 
 const run = promisify(execFile);
-const BIN = `${homedir()}/.local/bin/adderall`;
+const BIN = adderallBin();
 
 export default async function Command() {
   try {

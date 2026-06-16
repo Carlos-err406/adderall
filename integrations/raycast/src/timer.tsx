@@ -1,11 +1,11 @@
 import { Action, ActionPanel, Icon, List, closeMainWindow, showHUD } from "@raycast/api";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { homedir } from "node:os";
 import { useState } from "react";
+import { adderallBin } from "./adderall";
 
 const run = promisify(execFile);
-const BIN = `${homedir()}/.local/bin/adderall`;
+const BIN = adderallBin();
 const PRESETS = ["15m", "30m", "1h", "2h", "4h", "8h"];
 
 async function arm(duration: string) {
