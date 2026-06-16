@@ -1,5 +1,7 @@
 # 💊 adderall
 
+[![shellcheck](https://github.com/Carlos-err406/adderall/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/Carlos-err406/adderall/actions/workflows/shellcheck.yml)
+
 **Keep your Mac awake — even with the lid closed.**
 
 Close the laptop and walk away while your long-running jobs keep going: builds,
