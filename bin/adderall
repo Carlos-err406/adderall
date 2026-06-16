@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+#
+# adderall — keep your Mac awake, even with the lid closed.
+# https://github.com/Carlos-err406/adderall
+#
+# Combines `caffeinate` (block display/system/idle sleep) with
+# `pmset disablesleep 1` (the bit that allows clamshell-closed operation).
+# State is tracked by a pidfile so every integration agrees on on/off.
+
+PIDFILE="${TMPDIR:-/tmp}/adderall.pid"
+PILL="💊"
+ZZZ="😴"
+
+# Exit 0 while keeping-awake is active, else non-zero. No output.
+_active() {
+  [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null
+}
+
+_on() {
+  if _active; then
+    echo "$PILL adderall already ON (caffeinate PID $(cat "$PIDFILE"))"
+    return 0
+  fi
+  # -d display  -i idle system  -s system (on AC)  -u declare user active
+  nohup caffeinate -disu >/dev/null 2>&1 &
+  echo $! > "$PIDFILE"
+  sudo pmset disablesleep 1
+  echo "$PILL adderall ON — sleep blocked, even with the lid closed (PID $(cat "$PIDFILE"))"
+}
+
+_off() {
+  if [ -f "$PIDFILE" ]; then
+    kill "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null || true
+    rm -f "$PIDFILE"
+  fi
+  pkill -x caffeinate 2>/dev/null || true   # fallback for a stale pidfile
+  sudo pmset disablesleep 0
+  echo "$ZZZ adderall OFF — normal sleep restored"
+}
+
+_status() {
+  if _active; then
+    echo "$PILL adderall is ON — your Mac won't sleep, even with the lid closed (PID $(cat "$PIDFILE"))"
+    echo "   run 'adderall off' to restore normal sleep"
+  else
+    echo "$ZZZ adderall is OFF — normal sleep behavior"
+    echo "   run 'adderall on' to keep it awake (even with the lid closed)"
+  fi
+}
+
+_usage() {
+  cat <<USAGE
+adderall — keep your Mac awake, even with the lid closed.
+
+usage:
+  adderall            show status (default)
+  adderall on         keep the Mac awake (display + system sleep, lid-closed too)
+  adderall off        restore normal sleep
+  adderall toggle     flip on/off
+  adderall active     exit 0 if on, 1 if off — no output (for prompts/scripts)
+  adderall help       show this help
+
+state file: \${TMPDIR:-/tmp}/adderall.pid
+USAGE
+}
+
+case "${1:-status}" in
+  on)             _on ;;
+  off)            _off ;;
+  toggle)         if _active; then _off; else _on; fi ;;
+  status|"")      _status ;;
+  active)         _active; exit $? ;;       # silent predicate
+  help|-h|--help) _usage ;;
+  *)              echo "adderall: unknown command '$1'" >&2; echo >&2; _usage >&2; exit 2 ;;
+esac

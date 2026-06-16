@@ -1,0 +1,5 @@
+# adderall — allow a user to toggle clamshell sleep without a password.
+# Installed to /etc/sudoers.d/adderall (mode 0440, root:wheel) by install.sh,
+# which replaces __USER__ with your username. Scoped to exactly these two
+# commands — it grants nothing else.
+__USER__ ALL=(root) NOPASSWD: /usr/bin/pmset disablesleep 0, /usr/bin/pmset disablesleep 1
