@@ -1,5 +1,4 @@
 node_modules
 .raycast
 dist
-*.js
-*.d.ts
+raycast-env.d.ts
