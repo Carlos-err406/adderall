@@ -95,7 +95,7 @@ _on() {
   if [ -n "$oldpid" ]; then kill "$oldpid" 2>/dev/null || true; fi
 
   if [ -n "$secs" ]; then echo $(( $(date +%s) + secs )) > "$UNTILFILE"; else rm -f "$UNTILFILE"; fi
-  sudo pmset disablesleep 1
+  sudo /usr/bin/pmset disablesleep 1   # absolute path: matches the sudoers rule even in a minimal PATH (Raycast, etc.)
   [ -n "$secs" ] && _schedule_off "$pid"
 
   if $wasActive; then
@@ -118,7 +118,7 @@ _off() {
   fi
   rm -f "$UNTILFILE"
   pkill -x caffeinate 2>/dev/null || true   # fallback for a stale pidfile
-  sudo pmset disablesleep 0
+  sudo /usr/bin/pmset disablesleep 0         # absolute path: matches the sudoers rule even in a minimal PATH
   echo "$ZZZ adderall OFF — normal sleep restored"
 }
 
